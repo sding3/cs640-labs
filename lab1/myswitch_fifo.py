@@ -1,6 +1,8 @@
 import sys
 from switchyard.lib.userlib import *
 
+def isBroadcast(addr):
+    return SpecialEthAddr.ETHER_BROADCAST.value == addr
 
 class ForwardingTable:
     def __init__(self, size=5):
@@ -17,7 +19,8 @@ class ForwardingTable:
         return self.map[item]
 
     def update(self, addr, port):
-        """ if addr is already in map, we set it again
+        """ If addr is the broadcast addr, then do nothing.
+        If addr is already in map, we set it again
         without changing anything else, (as the port may
         have changed).
         If addr not in map, we update ForwardingTable in
@@ -27,6 +30,9 @@ class ForwardingTable:
         the oldest item from the ForwardingTable, then add
         the new item
         """
+        if isBroadcast(addr):
+            return
+
         if addr in self.map:
             self.map[addr] = port
             return
@@ -81,11 +87,6 @@ def main(net):
         log_debug("In {} received packet {} on {}".format(
             net.name, packet, input_port))
 
-        # broadcast
-        if packet[0].dst == "FF:FF:FF:FF:FF:FF":
-            broadcast(net, my_interfaces, input_port, packet)
-            continue
-
         # drop packet intended for me
         if packet[0].dst in mymacs:
             log_debug("Packet intended for me")
@@ -96,7 +97,8 @@ def main(net):
             safe_send_packet(net, forwarding_table[packet[0].dst], packet)
             continue
 
-        # packet's destination not found in forwarding table - broadcast it
+        # packet's destination not found in forwarding table, or the destination
+        # is the broadcast addrress - broadcast it either way
         broadcast(net, my_interfaces, input_port, packet)
 
     net.shutdown()
