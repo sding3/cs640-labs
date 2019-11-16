@@ -1,1 +1,7 @@
 __pycache__
+.swyard34/**
+.vscode/settings.json
+.python-version
+CS640-lab2-part2.code-workspace
+CS640-lab2-part3.code-workspace
+lab2/myrouter_part2.py
